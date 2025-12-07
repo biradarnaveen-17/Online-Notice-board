@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Auto-Refresh every 60 seconds to fetch new notices -->
+    <meta http-equiv="refresh" content="60">
+    <title>Digital Notice Board</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        .billboard-container { width: 100vw; height: 100vh; position: relative; }
+        
+        .slide { 
+            position: absolute; width: 100%; height: 100%; 
+            display: none; justify-content: center; align-items: center; 
+            background-color: #000; 
+            color: white; cursor: pointer; 
+            background-size: contain; 
+            background-position: center; 
+            background-repeat: no-repeat;
+        }
+        .slide.active-slide { display: flex; animation: fadeIn 0.5s ease; }
+        
+        /* TEXT ONLY SLIDE */
+        .text-slide-content {
+            width: 80%; text-align: center;
+        }
+        
+        /* OVERLAYS */
+        .media-overlay { 
+            position: absolute; bottom: 60px; left: 0; width: 100%;
+            text-align: center; color: white; z-index: 20;
+            text-shadow: 2px 2px 8px #000;
+        }
+        .media-overlay h1 { font-size: 3rem; margin-bottom: 5px; font-weight: 800; letter-spacing: 1px; }
+        .hint { display: block; margin-top: 10px; color: #f1c40f; font-size: 0.9rem; text-transform: uppercase; font-weight: bold; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .menu-trigger { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 100; }
+        .dot-btn { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; background: white; font-size: 24px; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        
+        .widget-clock { position: absolute; top: 30px; right: 40px; text-align: right; color: white; z-index: 50; text-shadow: 2px 2px 8px #000; }
+        #clockTime { font-size: 4rem; font-weight: 700; letter-spacing: 2px; }
+        #clockDate { font-size: 1.5rem; opacity: 0.9; font-weight: 300; }
+        
+        .cat-tag { position: absolute; bottom: 40px; right: 40px; background: #e74c3c; color: white; padding: 10px 25px; border-radius: 30px; z-index: 50; font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
+        .dept-tag { position: absolute; top: 40px; left: 40px; background: #3498db; color: white; padding: 8px 20px; border-radius: 30px; z-index: 50; font-weight: 600; text-transform: uppercase; }
+        
+        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); font-size: 3rem; color: rgba(255,255,255,0.3); cursor: pointer; z-index: 60; padding: 20px; }
+        .nav-left { left: 0; } .nav-right { right: 0; }
+        #freezeMsg { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 30px; border-radius: 50px; color: #f1c40f; font-size: 1.2rem; font-weight: bold; display: none; z-index: 55; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; display: none; justify-content: center; align-items: center; }
+        .modal-overlay.show-modal { display: flex; }
+        .modal-box { background: white; padding: 30px; border-radius: 20px; width: 450px; text-align: center; position: relative; max-height: 85vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 28px; border: none; background: none; }
+        
+        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .menu-tile { background:#f8f9fa; padding:20px; border-radius:15px; cursor:pointer; border: 1px solid #eee; }
+        .detail-btn { display: block; padding: 15px; margin-top: 15px; text-decoration: none; color: white; border-radius: 10px; font-weight: bold; }
+        .btn-link { background: #3498db; } .btn-dl { background: #27ae60; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .day-number { padding: 10px; cursor: pointer; border-radius: 8px; } .day-number:hover { background: #3498db; color: white; }
+
+        @media (max-width: 768px) {
+             #clockTime { font-size: 2rem; } #clockDate { font-size: 1rem; }
+             .media-overlay h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-clock"><div id="clockTime">--:--</div><div id="clockDate">Loading...</div></div>
+    <div id="freezeMsg">⏸ PAUSED (Hold for Details)</div>
+    <div class="nav-arrow nav-left" onclick="prevSlide()">&#10094;</div>
+    <div class="nav-arrow nav-right" onclick="nextSlideManual()">&#10095;</div>
+
+    <div class="billboard-container" id="billboard">
+        {% if notices %}
+            {% for notice in notices %}
+                <div class="slide {% if loop.first %}active-slide{% endif %}" 
+                     data-type="{{ notice.type }}"
+                     data-category="{{ notice.category }}"
+                     data-dept="{{ notice.author.department or 'General' }}"
+                     data-duration="{{ notice.duration }}"
+                     
+                     data-title="{{ notice.title }}"
+                     data-content="{{ notice.content }}"
+                     data-link="{{ notice.external_link or '' }}"
+                     data-attachment="{{ url_for('static', filename=notice.attachment) if notice.attachment else '' }}"
+                     data-date="{{ notice.date_posted.strftime('%d %b %Y') }}"
+
+                     {% if notice.type == 'image' %} style="background-image: url('{{ url_for('static', filename=notice.file_path) }}');" {% endif %}
+                     {% if notice.type == 'text' %} style="background-color: {{ notice.bg_color }}; color: {{ notice.text_color }};" {% endif %}>
+
+                    <div class="dept-tag">{{ notice.author.department or 'General' }}</div>
+                    <div class="cat-tag">{{ notice.category }}</div>
+
+                    <!-- 1. TEXT ONLY SLIDE -->
+                    {% if notice.type == 'text' %}
+                        <div class="text-slide-content">
+                            <h1 style="font-size: 3rem; text-transform: uppercase;">{{ notice.title }}</h1>
+                            <p style="font-size: 1.5rem; margin-top: 20px;">{{ notice.content }}</p>
+                            <span class="hint">HOLD FOR DETAILS</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- 2. VIDEO SLIDE -->
+                    {% if notice.type == 'video' %}
+                        <video width="100%" height="100%" style="object-fit: contain;" muted playsinline>
+                            <source src="{{ url_for('static', filename=notice.file_path) }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+
+                    <!-- 3. MEDIA OVERLAY (For Image/Video Titles) -->
+                    {% if notice.type != 'text' and notice.title %}
+                    <div class="media-overlay">
+                        <h1>{{ notice.title }}</h1>
+                        <span class="hint">HOLD FOR DETAILS</span>
+                    </div>
+                    {% endif %}
+                    
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="slide active-slide" data-type="text" data-duration="5000">
+                <div class="text-slide-content"><h1>NO CONTENT</h1><p>Login to Admin Panel.</p></div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="menu-trigger"><button class="dot-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button></div>
+
+    <div class="modal-overlay" id="mainMenu">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div id="menuScreen">
+                <h2 style="margin-bottom: 10px;">Menu</h2>
+                <div class="grid-menu">
+                    <div class="menu-tile" onclick="showScreen('calendarScreen')"><i class="fas fa-calendar-alt"></i><p>Calendar</p></div>
+                    <div class="menu-tile" onclick="showScreen('filterScreen')"><i class="fas fa-filter"></i><p>Filter</p></div>
+                    <div class="menu-tile" onclick="showScreen('requestScreen')"><i class="fas fa-paper-plane"></i><p>Request</p></div>
+                    <div class="menu-tile" onclick="showContacts()"><i class="fas fa-address-book"></i><p>Contacts</p></div>
+                    <a href="/admin/login" class="menu-tile" style="color:black; text-decoration:none;"><i class="fas fa-user-shield"></i><p>Admin</p></a>
+                </div>
+            </div>
+
+            <div id="detailScreen" style="display:none; text-align:left;">
+                <button class="close-btn" onclick="closeAllModals()">&times;</button>
+                <h2 id="dTitle" style="margin-top:10px;">Title</h2>
+                <p id="dDate" style="color:#888; margin-bottom:15px;">Date</p>
+                <p id="dContent" style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">Content</p>
+                <a id="dLink" href="#" target="_blank" class="detail-btn btn-link">Open Link</a>
+                <a id="dDl" href="#" download class="detail-btn btn-dl">Download PDF</a>
+            </div>
+
+            <div id="contactScreen" style="display:none; text-align:left;">
+                <button onclick="showScreen('menuScreen')" style="border:none; background:none; cursor:pointer;">Back</button>
+                <h3 style="margin:20px 0;">Dept. Heads</h3><div id="contactsList">Loading...</div>
+            </div>
+            
+            <div id="profileView" style="display:none; text-align:center;">
+                <button onclick="showContacts()" style="float:left; border:none; background:none; cursor:pointer;">Back</button>
+                <img id="pPic" src="" style="width:100px; height:100px; border-radius:50%; margin-top:10px;">
+                <h3 id="pName">Name</h3><p id="pDept">Dept</p><p id="pBio">Bio</p>
+                <!-- EMAIL LINK MODIFIED TO MAILTO -->
+                <a id="pEmail" href="#" style="color:#3498db; display:block; margin-top:10px; font-weight:bold;">Email</a>
+                
+                <ul id="pNotices" style="text-align:left; padding-left:20px; margin-top:20px;"></ul>
+            </div>
+            
+            <div id="calendarScreen" style="display:none;">
+                <button onclick="showScreen('menuScreen')" style="border:none; background:none; cursor:pointer;">Back</button>
+                <div style="margin-top:20px; display:flex; justify-content:space-between;"><button onclick="changeMonth(-1)">&lt;</button><span id="monthDisplay"></span><button onclick="changeMonth(1)">&gt;</button></div>
+                <div class="days-grid"><small>S</small><small>M</small><small>T</small><small>W</small><small>T</small><small>F</small><small>S</small></div><div class="days-grid" id="daysContainer"></div>
+            </div>
+            
+            <div id="requestScreen" style="display:none; text-align:left;">
+                <button onclick="showScreen('menuScreen')" style="border:none; background:none; cursor:pointer;">Back</button>
+                <h3>Send Request</h3>
+                <form id="reqForm">
+                    <input name="name" type="text" placeholder="Name" required style="width:100%; padding:10px; margin:5px 0;">
+                    <input name="contact" type="text" placeholder="Contact" required style="width:100%; padding:10px; margin:5px 0;">
+                    <label style="font-size:0.9rem; color:#666;">Send To:</label>
+                    <select name="target_admin" id="targetAdminSelect" style="width:100%; padding:10px; margin:5px 0;">
+                        <!-- Populated by JS -->
+                    </select>
+                    <textarea name="message" rows="4" placeholder="Message..." required style="width:100%; padding:10px; margin:5px 0;"></textarea>
+                    <input name="media" type="file" style="margin-bottom:20px;">
+                    <button type="button" onclick="submitRequest()" style="width:100%; padding:10px; background:#333; color:white;">Send</button>
+                </form>
+            </div>
+            
+            <div id="filterScreen" style="display:none;">
+                <button onclick="showScreen('menuScreen')" style="border:none; background:none; cursor:pointer;">Back</button>
+                <h3>Filter</h3>
+                <div class="grid-menu"><button onclick="applyFilter('All','cat')">All</button><button onclick="applyFilter('Exam','cat')">Exam</button><button onclick="applyFilter('Sports','cat')">Sports</button><button onclick="applyFilter('Placement','cat')">Placement</button></div>
+                <h4 style="margin-top:20px;">By Dept</h4><select id="deptFilter" onchange="applyFilter(this.value,'dept')" style="width:100%; padding:10px;"><option value="All">All</option></select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            setInterval(() => { const n=new Date(); document.getElementById('clockTime').innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); document.getElementById('clockDate').innerText=n.toLocaleDateString([],{weekday:'short',day:'2-digit',month:'short'}); }, 1000);
+            const slides=document.querySelectorAll('.slide'); const container=document.getElementById('billboard'); let cur=0, to, p=false, f=false, lp;
+            ['mousedown','touchstart'].forEach(e=>container.addEventListener(e,()=>{f=true;clearTimeout(to);document.getElementById('freezeMsg').style.display='block'; lp=setTimeout(()=>{showDetails(slides[cur])},500);}));
+            ['mouseup','touchend'].forEach(e=>container.addEventListener(e,()=>{clearTimeout(lp);f=false;document.getElementById('freezeMsg').style.display='none';if(!document.getElementById('mainMenu').classList.contains('show-modal')) next();}));
+            function show(i) {
+                slides.forEach(s=>{s.classList.remove('active-slide');const v=s.querySelector('video');if(v){v.pause();v.currentTime=0;}});
+                if(slides.length===0)return;
+                const s=slides[i]; s.classList.add('active-slide');
+                let d=parseInt(s.getAttribute('data-duration'))||5000;
+                if(s.getAttribute('data-type')==='video'){const v=s.querySelector('video');if(v){v.muted=true;v.play().catch(()=>{});v.onended=next;}else{to=setTimeout(next,2000);}}
+                else{to=setTimeout(next,d);}
+            }
+            function next(){if(p||f||slides.length===0)return;let n=(cur+1)%slides.length;let k=0;while(slides[n].classList.contains('filtered-out')&&k<slides.length){n=(n+1)%slides.length;k++;}cur=n;show(cur);}
+            if(slides.length>0)show(0);
+            window.nextSlideManual=()=>{clearTimeout(to);next();}; window.prevSlide=()=>{clearTimeout(to);let pr=(cur-1+slides.length)%slides.length;cur=pr;show(cur);};
+            window.showDetails=function(s){if(f){f=false;document.getElementById('freezeMsg').style.display='none';}
+                document.getElementById('dTitle').innerText=s.getAttribute('data-title'); document.getElementById('dDate').innerText="Posted: "+s.getAttribute('data-date'); document.getElementById('dContent').innerText=s.getAttribute('data-content');
+                const l=s.getAttribute('data-link'); const a=s.getAttribute('data-attachment');
+                const lb=document.getElementById('dLink'); lb.style.display=(l&&l!=='None')?'block':'none'; lb.href=l;
+                const db=document.getElementById('dDl'); db.style.display=(a&&a!=='None')?'block':'none'; db.href=a;
+                openModal('detailScreen');
+            }
+            window.toggleMenu=()=>{const m=document.getElementById('mainMenu');if(m.classList.contains('show-modal'))closeAllModals();else openModal('menuScreen');};
+            function openModal(id){p=true;clearTimeout(to);const v=slides[cur]?.querySelector('video');if(v)v.pause();document.getElementById('mainMenu').classList.add('show-modal');['menuScreen','detailScreen','contactScreen','profileView','calendarScreen','requestScreen','filterScreen'].forEach(s=>{document.getElementById(s).style.display=(s===id)?'block':'none';});if(id==='requestScreen')populateAdmins();if(id==='filterScreen')populateDepts();}
+            window.showScreen=id=>openModal(id); window.closeAllModals=()=>{document.getElementById('mainMenu').classList.remove('show-modal');p=false;const v=slides[cur]?.querySelector('video');if(v)v.play();else next();};
+            window.showContacts=()=>{openModal('contactScreen');const l=document.getElementById('contactsList');l.innerHTML='Loading...';fetch('/api/admins').then(r=>r.json()).then(d=>{if(d.length===0){l.innerHTML="No contacts.";return;}let h='';d.forEach(a=>{let pic=a.pic.includes('default')?'https://via.placeholder.com/50':'/static/'+a.pic;h+=`<div onclick="viewProfile(${a.id},'${a.name}','${a.dept}','${a.email}','${a.bio}','${pic}')" style="display:flex;align-items:center;margin-bottom:10px;background:#f5f5f5;padding:15px;border-radius:10px;cursor:pointer;"><img src="${pic}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;object-fit:cover;"><div><strong>${a.name}</strong><br><small>${a.dept}</small></div></div>`;});l.innerHTML=h;});};
+            window.viewProfile=(id,n,d,e,b,p)=>{document.getElementById('contactScreen').style.display='none';document.getElementById('profileView').style.display='block';document.getElementById('pName').innerText=n;document.getElementById('pDept').innerText=d;document.getElementById('pEmail').href="mailto:"+e;document.getElementById('pEmail').innerText="Email: " + e;document.getElementById('pBio').innerText=b;document.getElementById('pPic').src=p;const u=document.getElementById('pNotices');u.innerHTML='Loading...';fetch(`/api/admin_notices/${id}`).then(r=>r.json()).then(d=>{if(d.length===0)u.innerHTML='<li>No active notices.</li>';else{let h='';d.forEach(n=>h+=`<li style="margin-bottom:5px;">${n.title} <span style="color:#888;font-size:0.8rem;">(${n.date})</span></li>`);u.innerHTML=h;}});};
+            window.applyFilter=(v,t)=>{let f=false;slides.forEach(s=>{let m=false;if(t==='cat')m=(v==='All'||s.getAttribute('data-category')===v);if(t==='dept')m=(v==='All'||s.getAttribute('data-dept')===v);if(m){s.classList.remove('filtered-out');f=true;}else s.classList.add('filtered-out');});if(f){cur=-1;next();closeAllModals();}else alert("No notices found.");};
+            
+            // Populate Admin List for Requests & Filter
+            function populateAdmins() {
+                fetch('/api/admins').then(r=>r.json()).then(d=>{
+                    const s = document.getElementById('targetAdminSelect'); s.innerHTML='';
+                    d.forEach(a=>{ s.innerHTML += `<option value="${a.id}">${a.name} (${a.dept})</option>`; });
+                });
+            }
+            function populateDepts() {
+                 fetch('/api/admins').then(r=>r.json()).then(d=>{
+                    const s = document.getElementById('deptFilter'); 
+                    let depts = [...new Set(d.map(a => a.dept))]; // Unique depts
+                    s.innerHTML='<option value="All">All</option>';
+                    depts.forEach(dp=>{ s.innerHTML += `<option value="${dp}">${dp}</option>`; });
+                });
+            }
+            populateDepts(); // Run once
+
+            window.submitRequest=()=>{const f=document.getElementById('reqForm');const fd=new FormData(f);fetch('/submit_request',{method:'POST',body:fd}).then(r=>r.json()).then(()=>{alert("Sent!");f.reset();closeAllModals();}).catch(e=>alert("Error."));};
+            let dt=new Date();
+            window.renderCal=()=>{const m=document.getElementById('monthDisplay');const c=document.getElementById('daysContainer');dt.setDate(1);const ld=new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate();const fd=dt.getDay();m.innerText=dt.toLocaleDateString([],{month:'short',year:'numeric'});let h="";for(let x=fd;x>0;x--)h+=`<div></div>`;for(let i=1;i<=ld;i++)h+=`<div class="day-number" onclick="checkN(${i})">${i}</div>`;c.innerHTML=h;};
+            window.changeMonth=d=>{dt.setMonth(dt.getMonth()+d);renderCal();};
+            window.checkN=d=>{const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),da=String(d).padStart(2,'0');const f=`${y}-${m}-${da}`;const c=document.getElementById('daysContainer');c.innerHTML='Loading...';fetch(`/api/notices/${f}`).then(r=>r.json()).then(d=>{if(d.length>0){let h=`<div style="grid-column:span 7;text-align:left;"><h4>${f}</h4>`;d.forEach(n=>h+=`<div style="background:#eee;padding:5px;margin:5px;border-radius:5px;"><strong>${n.title}</strong><br><small>${n.content||'Media'}</small></div>`);h+=`<button onclick="renderCal()" style="margin-top:10px;">Back</button></div>`;c.innerHTML=h;}else{alert("No notices.");renderCal();}});};
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>Manage Users</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></head>
+<body class="bg-light p-5"><div class="container">
+    <div class="d-flex justify-content-between mb-4"><h2>Manage Admins</h2><a href="/admin/dashboard" class="btn btn-outline-secondary">Back</a></div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h4>Create Admin</h4>
+                <form action="/admin/users/create" method="POST">
+                    <input type="text" name="username" class="form-control mb-2" placeholder="Username" required>
+                    <input type="password" name="password" class="form-control mb-2" placeholder="Password" required>
+                    <input type="text" name="department" class="form-control mb-2" placeholder="Department" required>
+                    <input type="email" name="email" class="form-control mb-3" placeholder="Email (For Reset)" required>
+                    <button class="btn btn-success w-100">Create</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <table class="table bg-white shadow-sm">
+                <thead><tr><th>User</th><th>Dept</th><th>Email</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr><td>{{ u.username }}</td><td>{{ u.department }}</td><td>{{ u.email }}</td><td><a href="/admin/users/delete/{{ u.id }}" class="btn btn-danger btn-sm">Delete</a></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></body></html>

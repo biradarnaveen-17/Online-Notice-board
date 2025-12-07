@@ -1,0 +1,90 @@
+/* THE DOT BUTTON */
+.menu-trigger {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100; /* Always on top */
+}
+
+.dot-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s;
+}
+
+.dot-btn:hover { transform: scale(1.1); }
+
+/* THE MODAL OVERLAY (Background dimmer) */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Dark transparent background */
+    z-index: 50;
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px); /* The blur effect */
+}
+
+.show-modal {
+    display: flex; /* Use JS to add this class */
+}
+
+/* THE MODAL BOX (The white card) */
+.modal-box {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: popUp 0.3s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+/* GRID MENU INSIDE MODAL */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.menu-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-item:hover { background: #e9ecef; }
+.menu-item i { font-size: 2rem; color: #333; display: block; margin-bottom: 10px; }
+
+@keyframes popUp {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

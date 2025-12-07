@@ -1,0 +1,79 @@
+/* === ADMIN DASHBOARD THEME === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap'); /* Added Inter font import */
+
+:root {
+    --sidebar-bg: #1e293b;
+    --sidebar-active: #3b82f6;
+    --body-bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-dark: #334155;
+}
+
+body { 
+    background-color: var(--body-bg); 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* Sidebar */
+.sidebar {
+    background: var(--sidebar-bg);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.05);
+}
+.sidebar h3 {
+    font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;
+    color: #94a3b8; font-weight: 800; padding: 20px;
+}
+/* Ensure links have proper padding */
+.sidebar a {
+    color: #cbd5e1; border-radius: 8px; margin: 5px 15px;
+    padding: 10px 15px; /* Added Padding for better hit area */
+    font-weight: 500; font-size: 0.95rem;
+}
+.sidebar a:hover { background: rgba(255,255,255,0.1); color: white; }
+.sidebar a.active {
+    background: var(--sidebar-active); color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Cards */
+.card-notice {
+    border: none; border-radius: 16px;
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card-notice:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+.card-img-top {
+    border-radius: 16px 16px 0 0; height: 180px; object-fit: cover;
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 10px; border: 1px solid #e2e8f0;
+    padding: 12px; font-size: 0.95rem;
+}
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    border-color: var(--sidebar-active);
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--sidebar-active); border: none;
+    border-radius: 8px; padding: 10px 20px; font-weight: 600;
+}
+.btn-primary:hover { background: #2563eb; }
+
+/* Table */
+.table-card {
+    border-radius: 16px; overflow: hidden; border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.table thead th {
+    background: #f8fafc; color: #64748b; font-weight: 600;
+    text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+}
