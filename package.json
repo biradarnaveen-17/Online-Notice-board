@@ -1,0 +1,31 @@
+{
+  "name": "online_notice_board",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biradarnaveen-17/Online-Notice-board.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/biradarnaveen-17/Online-Notice-board/issues"
+  },
+  "homepage": "https://github.com/biradarnaveen-17/Online-Notice-board#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-flash": "^0.1.1",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.12",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  }
+}
