@@ -156,8 +156,11 @@ The Online Notice Board System follows a **client-server architecture**:
 
 ---
 
-📄 **Project Report:**  
-👉 https://drive.google.com/file/d/1Z2tfyA-t5nVErGVqM_pWGP-8meO7AOIk/view?usp=drive_link
+
+## 📄 Project Report
+🔗 **Full Project Report (PDF):**  
+https://drive.google.com/file/d/1Ag5905-FK-r7i_6hxRqpbM7J9IUyBLJx/view?usp=sharing
+
 
 ---
 
