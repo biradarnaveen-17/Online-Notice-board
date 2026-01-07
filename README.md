@@ -164,6 +164,9 @@ https://drive.google.com/file/d/1Ag5905-FK-r7i_6hxRqpbM7J9IUyBLJx/view?usp=shari
 
 ---
 
+If you encounter any difficulties or have questions regarding this project, please feel free to reach out to us through LinkedIn or Gmail.
+
+---
 ## 👨‍💻 Developed By
 - **Mr. Naveen Biradar**  
 - **Mr. Pavan CV**  
